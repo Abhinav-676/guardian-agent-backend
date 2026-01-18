@@ -1,0 +1,43 @@
+meta {
+  name: Execute Agent
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/agent/execute
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "signals": [
+      {
+        "type": "face_lock_fail",
+        "timestamp": 1705500000000,
+        "metadata": {
+          "attemptCount": 2
+        }
+      },
+      {
+        "type": "location_jump",
+        "timestamp": 1705500005000,
+        "metadata": {
+          "distance": 500
+        }
+      }
+    ],
+    "context": {
+      "ownerName": "John Doe",
+      "lastKnownLocation": "123 Main St, Springfield",
+      "batteryLevel": 85,
+      "deviceId": "4eecb799-7ac9-4ebd-95e7-45998ea123f9",
+      "mobileRunApiKey": "dr_sk_RJzhOfLrCiaZjOzsDoGOJkjrhwBCdXafNJYpxovonEhgTNCCJYqMETIZycVHeLGN"
+    }
+  }
+}
