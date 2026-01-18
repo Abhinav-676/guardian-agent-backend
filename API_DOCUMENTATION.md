@@ -55,6 +55,11 @@ Authenticate an existing user.
     ```json
     {
       "message": "Login successful",
+      "user": {
+        "id": "60d0fe4f5311236168a109ca",
+        "name": "John Doe",
+        "email": "user@example.com"
+      },
       "token": "jwt_token_string"
     }
     ```
@@ -101,7 +106,8 @@ Update user details.
 -   **Body** (Partial):
     ```json
     {
-      "name": "Jane Doe"
+      "name": "Jane Doe",
+      "mobileRunApiKey": "new_api_key_123"
     }
     ```
 -   **Response** (200):
