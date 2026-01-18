@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { User, UserZodSchema, type UserBase } from '../schemas/userSchema'
+import { User, UserZodSchema } from '../schemas/userSchema'
 import { validateData, ValidationError } from '../utils/validation'
 
 // Get all users
