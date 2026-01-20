@@ -12,6 +12,12 @@ declare global {
 
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
     const authHeader = req.headers.authorization
+    const clientIP = req.ip
+
+    if (clientIP != process.env.AUTHERISED_CLIENT_IP) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+    }
 
     if (!authHeader) {
         res.status(401).json({ error: 'No token provided' })

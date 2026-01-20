@@ -8,8 +8,6 @@ export const UserZodSchema = z.object({
   email: z.email('Invalid email address'),
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  mobileRunApiKey: z.string().optional(),
-  deviceId: z.string().optional(),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 })
@@ -40,13 +38,6 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
       type: String,
       required: true,
       select: false,
-    },
-    mobileRunApiKey: {
-      type: String,
-      select: false,
-    },
-    deviceId: {
-      type: String,
     },
   },
   {

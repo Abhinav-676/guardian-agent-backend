@@ -24,9 +24,7 @@ Create a new user account.
     {
       "email": "user@example.com",
       "name": "John Doe",
-      "password": "securePassword123",
-      "deviceId": "device_123",
-      "mobileRunApiKey": "mr_apikey_123"
+      "password": "securePassword123"
     }
     ```
 -   **Response** (201):
@@ -106,8 +104,7 @@ Update user details.
 -   **Body** (Partial):
     ```json
     {
-      "name": "Jane Doe",
-      "mobileRunApiKey": "new_api_key_123"
+      "name": "Jane Doe"
     }
     ```
 -   **Response** (200):

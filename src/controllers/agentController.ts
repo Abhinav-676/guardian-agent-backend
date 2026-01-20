@@ -71,8 +71,6 @@ function calculateConfidenceScore(signals: TheftSignal[]): number {
                 score += 50
                 break
             case 'power_off_attempt':
-                // Power off attempt on lock screen is separate critical trigger, 
-                // but if part of scoring, we can add high value or handle distinctly.
                 score += 50
                 break
         }
@@ -90,7 +88,10 @@ function determineAgentState(score: number): 'NORMAL' | 'SUSPICIOUS' | 'THEFT_MO
 // --- Controller ---
 
 export async function execute(req: Request, res: Response): Promise<void> {
+    console.log("Executing agent controller")
+
     try {
+        console.log(req.body)
         // 1. Validate Input
         const { signals, context } = validateData<z.infer<typeof AgentRequestSchema>>(
             AgentRequestSchema,
@@ -104,26 +105,24 @@ export async function execute(req: Request, res: Response): Promise<void> {
         // 3. Construct Agent Prompt based on State
         let taskPrompt = `Current State: ${state}. Confidence Score: ${score}.\n`
         taskPrompt += `Signals: ${signals.map(s => s.type).join(', ')}.\n`
+        
+        if (state === 'NORMAL') {
+            res.status(200).json({
+                message: "Situation normal, continuing monitoring"
+            })
+
+            return
+        }
 
         if (state === 'THEFT_MODE') {
             taskPrompt += `CRITICAL: THEFT DETECTED. ACT IMMEDIATELY.\n`
-            taskPrompt += `- Send SMS to Gautam Govind with Location: ${context.lastKnownLocation || 'Unknown'}\n`
-            taskPrompt += `- Initiate Gautam Govind call.\n`
-            taskPrompt += `- Lock device screen.\n`
-            taskPrompt += `Context: Owner ${context.ownerName}, Battery ${context.batteryLevel}%.\n`
+            taskPrompt += `Perform the following steps.\n`
+            taskPrompt += `- Send "Emergency Contact" SMS with a message saying that the device has been stolen, location is Latitude 	23.3426 Longitude 	85.3099 and battery percentage is 40%\n`
         } else if (state === 'SUSPICIOUS') {
             taskPrompt += `WARNING: Suspicious activity detected.\n`
-            taskPrompt += `- Prepare SMS text but do not send yet.\n`
-            // taskPrompt += `- Increase sampling rate of location and camera.\n`
-        } else {
-            taskPrompt += `Status Normal. Log events and continue monitoring.\n`
+            taskPrompt += `- Send SMS to "Emergency Contact" with message, "Suspicious acitvity detected, please check your device"\n`
         }
 
-        // Check for "Power Off" specific override
-        const powerOffSignal = signals.find(s => s.type === 'power_off_attempt')
-        if (powerOffSignal) {
-            taskPrompt += `\nEMERGENCY: POWER OFF ATTEMPT DETECTED! EXECUTE EMERGENCY PACKET NOW.\n`
-        }
 
         // 4. Initialize MobileRun Client
         if (!req.user || !req.user.userId) {
@@ -131,17 +130,22 @@ export async function execute(req: Request, res: Response): Promise<void> {
             return
         }
 
-        const user = await User.findById(req.user.userId).select('+mobileRunApiKey')
+        const user = await User.findById(req.user.userId)
 
         if (!user) {
             res.status(404).json({ error: 'User not found' })
             return
         }
 
-        const apiKey = user.mobileRunApiKey
 
+        const apiKey = process.env.MOBILE_RUN_API
+        const deviceId = process.env.DEVICE_ID
         if (!apiKey) {
-            throw new Error('MobileRun API Key is missing for this user. Updated your profile.')
+            throw new Error('MOBILE_RUN_API is missing in environment variables.')
+        }
+        if (!deviceId) {
+            console.log(deviceId, "Device ID")
+            throw new Error('DEVICE_ID is missing in environment variables.')
         }
 
         const client = new Mobilerun({
@@ -152,7 +156,9 @@ export async function execute(req: Request, res: Response): Promise<void> {
         const response = await client.tasks.run({
             llmModel: 'google/gemini-2.5-flash',
             task: taskPrompt,
-            deviceId: user.deviceId || 'unknown_device',
+            deviceId: deviceId,
+            vision: true,
+            executionTimeout: 10000
         })
 
         res.status(200).json({
@@ -175,10 +181,11 @@ export async function execute(req: Request, res: Response): Promise<void> {
                 return
             }
 
+            console.log(error)
             res.status(500).json({ error: error.message })
             return
         }
-
+        
         res.status(500).json({ error: 'Internal server error' })
     }
 }

@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+app.set('trust proxy', true);
+
 app.use('/users', userRoutes)
 app.use('/auth', authRoutes)
 app.use('/agent', agentRoutes)
@@ -27,7 +29,6 @@ async function startServer() {
   dotenv.config()
 
   try {
-    console.log("Yeah")
     // Connect to MongoDB
     await connectDatabase()
 
